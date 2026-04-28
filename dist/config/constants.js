@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BCRYPT_SALT_ROUNDS = exports.JWT_EXPIRES_IN = exports.DEFAULT_HOST = exports.DEFAULT_PORT = exports.AUTH_PREFIX = exports.API_PREFIX = exports.API_VERSION = exports.APP_NAME = void 0;
+exports.APP_NAME = 'Falsity API';
+exports.API_VERSION = 'v1';
+exports.API_PREFIX = `/api/${exports.API_VERSION}`;
+exports.AUTH_PREFIX = `${exports.API_PREFIX}/auth`;
+exports.DEFAULT_PORT = 3000;
+exports.DEFAULT_HOST = '0.0.0.0';
+exports.JWT_EXPIRES_IN = '1d';
+exports.BCRYPT_SALT_ROUNDS = 12;

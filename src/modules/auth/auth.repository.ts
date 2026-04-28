@@ -1,9 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-
+import { prisma } from '../../plugins/prisma';
 import type { AuthUserRecord } from './auth.types';
 import type { Role } from '../../common/types';
-
-const prisma = new PrismaClient();
 
 export async function createUser(data: {
   name: string;

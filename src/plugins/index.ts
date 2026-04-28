@@ -1,10 +1,11 @@
 ﻿import type { FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 
-import { AuthServiceError } from '../modules/auth/auth.service';
+import { AppError } from '../common/errors/app-error';
+import { ValidationError } from '../common/errors/validation-error';
 
 function getStatusCode(error: unknown): number {
-  if (error instanceof AuthServiceError) {
+  if (error instanceof AppError) {
     return error.statusCode;
   }
 
@@ -29,6 +30,10 @@ function getStatusCode(error: unknown): number {
 function getErrorMessage(error: unknown, statusCode: number): string {
   if (error instanceof ZodError) {
     return 'Validation failure';
+  }
+
+  if (error instanceof ValidationError) {
+    return error.message;
   }
 
   if (statusCode >= 500) {

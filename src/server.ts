@@ -1,13 +1,10 @@
-import app from './app';
+import { buildApp } from './app';
 import { config } from './config/env';
 
-async function startServer(): Promise<void> {
-  try {
-    await app.listen({ port: config.PORT, host: config.HOST });
-  } catch (error: unknown) {
-    app.log.error(error);
-    process.exit(1);
-  }
-}
+const start = async () => {
+  const app = await buildApp();
 
-void startServer();
+  await app.listen({ host: config.HOST, port: config.PORT });
+};
+
+start();

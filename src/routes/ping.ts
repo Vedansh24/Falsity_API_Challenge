@@ -26,5 +26,5 @@ const pingHandler: RouteHandlerMethod = async (
 };
 
 export function registerPingRoute(fastify: FastifyInstance): void {
-  fastify.get('/api/v1/ping', pingOptions, pingHandler);
+  fastify.get('/ping', pingOptions, pingHandler);
 }

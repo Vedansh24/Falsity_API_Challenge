@@ -14,12 +14,59 @@ enum Role {
   ADMIN
 }
 
+enum ClaimStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
 model User {
   id           String   @id @default(uuid())
   name         String
   email        String   @unique
   passwordHash String
   role         Role     @default(USER)
+  claims       Claim[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Claim {
+  id            String      @id @default(uuid())
+  title         String
+  statement     String
+  status        ClaimStatus @default(DRAFT)
+  submittedById String
+  submittedBy   User        @relation(fields: [submittedById], references: [id], onDelete: Restrict)
+  evidences     Evidence[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([submittedById])
+  @@index([status])
+  @@index([submittedById, status])
+}
+model Evidence {
+  id                 String   @id @default(uuid())
+  claimId            String
+  sourceType         String
+  sourceUrl          String
+  stance             String
+  credibilityScore   Float
+  relevanceScore     Float
+  freshnessScore     Float
+  reviewerConfidence Float
+  createdAt          DateTime @default(now())
+
+  claim Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+}
+
+enum Stance {
+  SUPPORTS
+  CONTRADICTS
+  NEUTRAL
 }

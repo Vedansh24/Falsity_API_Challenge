@@ -1,5 +1,8 @@
 import type { FastifyReply, FastifyRequest, RouteHandlerMethod } from 'fastify';
 
+import { AuthError } from '../../common/errors/auth-error';
+import { JWT_EXPIRES_IN } from '../../config/constants';
+
 import { registerSchema, loginSchema } from './auth.schema';
 import {
   getCurrentUser,
@@ -21,8 +24,13 @@ export const loginController: RouteHandlerMethod = async (
   reply: FastifyReply
 ): Promise<FastifyReply> => {
   const body = loginSchema.parse(request.body);
-  const token = await loginUser(body);
-  return reply.code(200).send(token);
+  const payload = await loginUser(body);
+  const accessToken = request.server.jwt.sign(payload, { expiresIn: JWT_EXPIRES_IN });
+
+  return reply.code(200).send({
+    accessToken,
+    expiresIn: JWT_EXPIRES_IN
+  });
 };
 
 export const meController: RouteHandlerMethod = async (
@@ -30,7 +38,7 @@ export const meController: RouteHandlerMethod = async (
   reply: FastifyReply
 ): Promise<FastifyReply> => {
   if (request.user === undefined) {
-    return reply.code(401).send({ error: 'Invalid or expired token' });
+    throw new AuthError(401, 'Invalid or expired token');
   }
 
   const user = await getCurrentUser(request.user);

@@ -3,22 +3,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createUser = createUser;
 exports.findUserByEmail = findUserByEmail;
 exports.findUserById = findUserById;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../plugins/prisma");
 async function createUser(data) {
-    return prisma.user.create({
+    return prisma_1.prisma.user.create({
         data
     });
 }
 async function findUserByEmail(email) {
-    return prisma.user.findUnique({
+    return prisma_1.prisma.user.findUnique({
         where: {
             email
         }
     });
 }
 async function findUserById(id) {
-    return prisma.user.findUnique({
+    return prisma_1.prisma.user.findUnique({
         where: {
             id
         }

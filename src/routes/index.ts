@@ -1,11 +1,9 @@
 ﻿import type { FastifyInstance } from 'fastify';
 
 import { registerHealthRoute } from './health';
-import { registerPingRoute } from './ping';
-import { registerAuthRoutes } from '../modules/auth/auth.routes';
+import { registerV1Routes } from './v1';
 
-export function registerRoutes(fastify: FastifyInstance): void {
+export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   registerHealthRoute(fastify);
-  registerPingRoute(fastify);
-  registerAuthRoutes(fastify);
+  await registerV1Routes(fastify);
 }

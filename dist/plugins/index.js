@@ -2,9 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerPlugins = registerPlugins;
 const zod_1 = require("zod");
-const auth_service_1 = require("../modules/auth/auth.service");
+const app_error_1 = require("../common/errors/app-error");
+const validation_error_1 = require("../common/errors/validation-error");
 function getStatusCode(error) {
-    if (error instanceof auth_service_1.AuthServiceError) {
+    if (error instanceof app_error_1.AppError) {
         return error.statusCode;
     }
     if (error instanceof zod_1.ZodError) {
@@ -24,6 +25,9 @@ function getStatusCode(error) {
 function getErrorMessage(error, statusCode) {
     if (error instanceof zod_1.ZodError) {
         return 'Validation failure';
+    }
+    if (error instanceof validation_error_1.ValidationError) {
+        return error.message;
     }
     if (statusCode >= 500) {
         return 'Internal server error';

@@ -1,7 +1,6 @@
-import bcrypt from 'bcrypt';
-
-import { signToken } from '../../lib/jwt';
+import { AuthError } from '../../common/errors/auth-error';
 import type { AuthenticatedUser, PublicUser } from '../../common/types';
+import { comparePassword, hashPassword } from '../../common/utils/hashing';
 
 import {
   createUser,
@@ -12,20 +11,12 @@ import type {
   AuthUserRecord,
   CurrentUser,
   LoginInput,
-  LoginResponse,
+  LoginUserPayload,
   RegisterInput,
   RegisterResponse
 } from './auth.types';
 
-export class AuthServiceError extends Error {
-  public readonly statusCode: number;
 
-  constructor(statusCode: number, message: string) {
-    super(message);
-    this.name = 'AuthServiceError';
-    this.statusCode = statusCode;
-  }
-}
 
 function toPublicUser(user: AuthUserRecord): PublicUser {
   return {
@@ -46,10 +37,10 @@ export async function registerUser(input: RegisterInput): Promise<RegisterRespon
   const existingUser = await findUserByEmail(email);
 
   if (existingUser !== null) {
-    throw new AuthServiceError(409, 'Email already registered');
+    throw new AuthError(409, 'Email already registered');
   }
 
-  const passwordHash = await bcrypt.hash(input.password, 12);
+  const passwordHash = await hashPassword(input.password);
   const user = await createUser({
     name: input.name.trim(),
     email,
@@ -60,28 +51,23 @@ export async function registerUser(input: RegisterInput): Promise<RegisterRespon
   return toPublicUser(user);
 }
 
-export async function loginUser(input: LoginInput): Promise<LoginResponse> {
+export async function loginUser(input: LoginInput): Promise<LoginUserPayload> {
   const email = normalizeEmail(input.email);
   const user = await findUserByEmail(email);
 
   if (user === null) {
-    throw new AuthServiceError(401, 'Invalid credentials');
+    throw new AuthError(401, 'Invalid credentials');
   }
 
-  const passwordMatches = await bcrypt.compare(input.password, user.passwordHash);
+  const passwordMatches = await comparePassword(input.password, user.passwordHash);
 
   if (!passwordMatches) {
-    throw new AuthServiceError(401, 'Invalid credentials');
+    throw new AuthError(401, 'Invalid credentials');
   }
 
-  const accessToken = signToken({
+  return {
     userId: user.id,
     role: user.role
-  });
-
-  return {
-    accessToken,
-    expiresIn: '1d'
   };
 }
 
@@ -89,7 +75,7 @@ export async function getCurrentUser(user: AuthenticatedUser): Promise<CurrentUs
   const freshUser = await findUserById(user.userId);
 
   if (freshUser === null) {
-    throw new AuthServiceError(404, 'User not found');
+    throw new AuthError(404, 'User not found');
   }
 
   return toPublicUser(freshUser);

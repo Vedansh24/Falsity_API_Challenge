@@ -20,5 +20,5 @@ const pingHandler = async (_request, reply) => {
     return reply.code(200).send(response);
 };
 function registerPingRoute(fastify) {
-    fastify.get('/api/v1/ping', pingOptions, pingHandler);
+    fastify.get('/ping', pingOptions, pingHandler);
 }

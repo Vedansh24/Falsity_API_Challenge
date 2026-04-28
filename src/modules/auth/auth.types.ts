@@ -30,3 +30,5 @@ export interface LoginResponse {
 
 export type CurrentUser = PublicUser;
 export type TokenUser = AuthenticatedUser;
+
+export type LoginUserPayload = AuthenticatedUser;
