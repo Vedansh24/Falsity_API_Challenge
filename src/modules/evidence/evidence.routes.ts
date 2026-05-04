@@ -101,7 +101,7 @@ export async function registerEvidenceRoutes(fastify: FastifyInstance): Promise<
       reviewerConfidence: number;
     };
   }>(
-    '/claims/:id/evidence',
+    '/:id/evidence',
     createEvidenceRouteOptions,
     createEvidenceController
   );
