@@ -1,6 +1,6 @@
 import { prisma } from '../../plugins/prisma';
 
-export type ClaimStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJECTED';
+export type ClaimStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_MORE_EVIDENCE' | 'READY_FOR_VERDICT' | 'PUBLISHED' | 'ARCHIVED' | 'RESOLVED' | 'REJECTED';
 
 export interface ClaimRecord {
   id: string;
@@ -8,6 +8,13 @@ export interface ClaimRecord {
   statement: string;
   status: ClaimStatus;
   submittedById: string;
+  category: string | null;
+  publicSlug: string | null;
+  currentAnalystId: string | null;
+  currentReviewerId: string | null;
+  submittedAt: Date | null;
+  publishedAt: Date | null;
+  archivedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,7 +56,7 @@ export async function findMany(input: {
   };
 
   return prisma.claim.findMany({
-    where,
+    where: where as any,
     orderBy: { createdAt: 'desc' },
     skip: input.skip,
     take: input.take
@@ -62,7 +69,7 @@ export async function countMany(filter: ClaimListFilter): Promise<number> {
     ...(filter.submittedById !== undefined ? { submittedById: filter.submittedById } : {})
   };
 
-  return prisma.claim.count({ where });
+  return prisma.claim.count({ where: where as any });
 }
 
 export async function updateClaim(id: string, data: {
@@ -72,6 +79,6 @@ export async function updateClaim(id: string, data: {
 }): Promise<ClaimRecord> {
   return prisma.claim.update({
     where: { id },
-    data
+    data: data as any
   });
 }

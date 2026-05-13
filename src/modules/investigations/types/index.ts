@@ -1,0 +1,2 @@
+// Investigations types entrypoint
+export {};

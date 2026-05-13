@@ -44,12 +44,25 @@ function assertDraft(claim: ClaimRecord, action: 'update' | 'submit'): void {
   }
 }
 
+import * as audit from '../audit/services/audit-log.service';
+
 export async function createClaimService(input: CreateClaimInput, requester: AuthenticatedUser): Promise<ClaimRecord> {
-  return createClaim({
+  const claim = await createClaim({
     title: input.statement.trim(),
     statement: input.statement.trim(),
     submittedById: requester.userId
   });
+
+  // Emit audit (non-blocking)
+  await audit.log({
+    action: 'CLAIM_CREATED',
+    entityType: 'CLAIM',
+    entityId: claim.id,
+    performedById: requester.userId,
+    metadata: { title: claim.title }
+  });
+
+  return claim;
 }
 
 export async function listClaimsService(input: ListClaimsInput): Promise<PaginatedResponse<ClaimRecord>> {
@@ -105,7 +118,15 @@ export async function submitClaimService(id: string, requester: AuthenticatedUse
   assertOwner(claim, requester);
   assertDraft(claim, 'submit');
 
-  return updateClaim(id, {
-    status: 'SUBMITTED'
+  const updated = await updateClaim(id, { status: 'SUBMITTED' });
+
+  await audit.log({
+    action: 'CLAIM_SUBMITTED',
+    entityType: 'CLAIM',
+    entityId: id,
+    performedById: requester.userId,
+    metadata: { previousStatus: claim.status, newStatus: updated.status }
   });
+
+  return updated;
 }

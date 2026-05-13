@@ -1,0 +1,2 @@
+// Verdicts repositories entrypoint
+export {};

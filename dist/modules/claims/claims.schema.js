@@ -2,19 +2,25 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listClaimsResponseJsonSchema = exports.claimResponseJsonSchema = exports.listClaimsQueryJsonSchema = exports.claimIdParamsJsonSchema = exports.updateClaimBodyJsonSchema = exports.createClaimBodyJsonSchema = exports.listClaimsQuerySchema = exports.claimIdParamsSchema = exports.updateClaimSchema = exports.createClaimSchema = void 0;
 const zod_1 = require("zod");
-const claimStatuses = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED'];
+const claimStatuses = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'NEEDS_MORE_EVIDENCE', 'READY_FOR_VERDICT', 'PUBLISHED', 'ARCHIVED', 'RESOLVED', 'REJECTED'];
 const claimProperties = {
     id: { type: 'string', format: 'uuid' },
     title: { type: 'string' },
     statement: { type: 'string' },
     status: { type: 'string', enum: [...claimStatuses] },
     submittedById: { type: 'string', format: 'uuid' },
+    category: { type: 'string' },
+    publicSlug: { type: 'string' },
+    currentAnalystId: { type: 'string', format: 'uuid' },
+    currentReviewerId: { type: 'string', format: 'uuid' },
+    submittedAt: { type: 'string', format: 'date-time' },
+    publishedAt: { type: 'string', format: 'date-time' },
+    archivedAt: { type: 'string', format: 'date-time' },
     createdAt: { type: 'string', format: 'date-time' },
     updatedAt: { type: 'string', format: 'date-time' }
 };
 exports.createClaimSchema = zod_1.z.object({
-    title: zod_1.z.string().trim().min(3).max(200),
-    statement: zod_1.z.string().trim().min(10).max(5000)
+    statement: zod_1.z.string()
 });
 exports.updateClaimSchema = zod_1.z.object({
     title: zod_1.z.string().trim().min(3).max(200).optional(),
@@ -33,12 +39,10 @@ exports.listClaimsQuerySchema = zod_1.z.object({
 });
 exports.createClaimBodyJsonSchema = {
     type: 'object',
+    required: ['statement'],
     properties: {
-        title: { type: 'string', minLength: 3, maxLength: 200 },
-        statement: { type: 'string', minLength: 10, maxLength: 5000 }
-    },
-    required: ['title', 'statement'],
-    additionalProperties: false
+        statement: { type: 'string' }
+    }
 };
 exports.updateClaimBodyJsonSchema = {
     type: 'object',

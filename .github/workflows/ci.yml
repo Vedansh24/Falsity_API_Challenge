@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate
+        run: npx prisma generate --schema=./prisma/schema.prisma
+
+      - name: TypeScript type check
+        run: npx tsc -p tsconfig.json --noEmit
+
+      - name: Run tests
+        run: |
+          if [ -f package.json ]; then
+            if npm run | grep -q "vitest"; then
+              npx vitest run
+            else
+              echo "No tests configured; skipping";
+            fi
+          fi
+
+      - name: Build
+        run: npm run build

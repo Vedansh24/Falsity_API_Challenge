@@ -1,0 +1,2 @@
+// Investigations repositories entrypoint
+export {};

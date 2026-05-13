@@ -1,0 +1,2 @@
+// Verdicts schemas entrypoint
+export {};

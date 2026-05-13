@@ -27,7 +27,7 @@ async function findMany(input) {
         ...(input.filter.submittedById !== undefined ? { submittedById: input.filter.submittedById } : {})
     };
     return prisma_1.prisma.claim.findMany({
-        where,
+        where: where,
         orderBy: { createdAt: 'desc' },
         skip: input.skip,
         take: input.take
@@ -38,11 +38,11 @@ async function countMany(filter) {
         ...(filter.status !== undefined ? { status: filter.status } : {}),
         ...(filter.submittedById !== undefined ? { submittedById: filter.submittedById } : {})
     };
-    return prisma_1.prisma.claim.count({ where });
+    return prisma_1.prisma.claim.count({ where: where });
 }
 async function updateClaim(id, data) {
     return prisma_1.prisma.claim.update({
         where: { id },
-        data
+        data: data
     });
 }

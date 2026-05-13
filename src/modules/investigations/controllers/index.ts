@@ -1,0 +1,2 @@
+// Investigations controllers entrypoint
+export {};

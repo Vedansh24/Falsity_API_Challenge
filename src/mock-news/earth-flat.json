@@ -1,0 +1,30 @@
+[
+  {
+    "source": "NASA",
+    "type": "GOVERNMENT",
+    "title": "NASA confirms Earth is spherical",
+    "content": "Scientific observations prove the Earth is round.",
+    "publishedAt": "2026-04-01"
+  },
+  {
+    "source": "BBC",
+    "type": "NEWS",
+    "title": "Researchers reject flat Earth theory",
+    "content": "Modern science strongly contradicts flat Earth claims.",
+    "publishedAt": "2026-03-20"
+  },
+  {
+    "source": "Flat Earth Blog",
+    "type": "BLOG",
+    "title": "Evidence Earth might be flat",
+    "content": "Some people believe Earth is flat based on visual observations.",
+    "publishedAt": "2024-01-01"
+  },
+  {
+    "source": "Random Social Post",
+    "type": "SOCIAL",
+    "title": "Earth looks flat to me",
+    "content": "I think the horizon appears flat.",
+    "publishedAt": "2025-06-10"
+  }
+]

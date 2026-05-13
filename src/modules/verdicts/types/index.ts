@@ -1,0 +1,2 @@
+// Verdicts types entrypoint
+export {};

@@ -1,0 +1,2 @@
+// Investigations schemas entrypoint
+export {};

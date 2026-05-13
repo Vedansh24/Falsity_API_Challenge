@@ -13,7 +13,7 @@ function requireAuthenticatedUser(request) {
 const createClaimController = async (request, reply) => {
     const body = claims_schema_1.createClaimSchema.parse(request.body);
     const currentUser = requireAuthenticatedUser(request);
-    const claim = await (0, claims_service_1.createClaimService)(body, currentUser);
+    const claim = await (0, claims_service_1.createClaimService)({ statement: body.statement }, currentUser);
     return reply.code(201).send(claim);
 };
 exports.createClaimController = createClaimController;

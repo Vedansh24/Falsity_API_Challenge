@@ -18,36 +18,56 @@ enum ClaimStatus {
   DRAFT
   SUBMITTED
   UNDER_REVIEW
-  RESOLVED
-  REJECTED
+  NEEDS_MORE_EVIDENCE
+  READY_FOR_VERDICT
+  PUBLISHED
+  ARCHIVED
 }
 
 model User {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(USER)
-  claims       Claim[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String          @id @default(uuid())
+  name              String
+  email             String          @unique
+  passwordHash      String
+  role              Role            @default(USER)
+  claims            Claim[]
+  investigations    Investigation[]
+  publishedVerdicts Verdict[]
+  comments          Comment[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 }
 
 model Claim {
-  id            String      @id @default(uuid())
-  title         String
-  statement     String
-  status        ClaimStatus @default(DRAFT)
-  submittedById String
-  submittedBy   User        @relation(fields: [submittedById], references: [id], onDelete: Restrict)
-  evidences     Evidence[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id                String          @id @default(uuid())
+  title             String
+  statement         String
+  status            ClaimStatus     @default(DRAFT)
+  submittedById     String
+  submittedBy       User            @relation(fields: [submittedById], references: [id], onDelete: Restrict)
+  category          String?
+  publicSlug        String?         @unique
+  currentAnalystId  String?
+  currentReviewerId String?
+  submittedAt       DateTime?
+  publishedAt       DateTime?
+  archivedAt        DateTime?
+  evidences         Evidence[]
+  investigations    Investigation[]
+  verdicts          Verdict[]
+  verdictHistory    VerdictHistory[]
+  comments          Comment[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@index([submittedById])
   @@index([status])
   @@index([submittedById, status])
+  @@index([status, createdAt])
 }
+
 model Evidence {
   id                 String   @id @default(uuid())
   claimId            String
@@ -69,4 +89,132 @@ enum Stance {
   SUPPORTS
   CONTRADICTS
   NEUTRAL
+}
+
+enum VerdictType {
+  TRUE
+  MISLEADING
+  PARTLY_FALSE
+  FALSE
+  SEVERELY_FALSE
+  UNVERIFIABLE
+}
+
+enum ConfidenceBand {
+  LOW
+  MEDIUM
+  HIGH
+  VERY_HIGH
+}
+
+model Investigation {
+  id             String    @id @default(uuid())
+  claimId        String
+  investigatorId String?
+  status         String    @default("PENDING")
+  notes          String?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  claim        Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  investigator User? @relation(fields: [investigatorId], references: [id])
+
+  @@index([claimId])
+  @@index([investigatorId])
+}
+
+model Verdict {
+  id                    String          @id @default(uuid())
+  claimId               String
+  verdictType           VerdictType
+  falsityScore          Float           @default(50)
+  confidenceScore       Float           @default(0)
+  confidenceBand        ConfidenceBand  @default(LOW)
+  reasoning             String?
+  supportScore          Float?
+  contradictScore       Float?
+  contradictionLevel    Float?
+  isApproved            Boolean         @default(false)
+  publishedById         String?
+  publishedAt           DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  claim       Claim              @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  publishedBy User?              @relation(fields: [publishedById], references: [id])
+  history     VerdictHistory[]
+
+  @@index([claimId])
+  @@index([publishedById])
+  @@index([verdictType])
+}
+
+model VerdictHistory {
+  id                  String          @id @default(uuid())
+  verdictId           String
+  claimId             String
+  verdictType         VerdictType
+  falsityScore        Float
+  confidenceScore     Float
+  confidenceBand      ConfidenceBand
+  reasoning           String?
+  supportScore        Float?
+  contradictScore     Float?
+  contradictionLevel  Float?
+  createdAt           DateTime        @default(now())
+
+  verdict Verdict @relation(fields: [verdictId], references: [id], onDelete: Cascade)
+  claim   Claim   @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([verdictId])
+  @@index([claimId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  claimId   String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  claim Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([claimId])
+  @@index([userId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }

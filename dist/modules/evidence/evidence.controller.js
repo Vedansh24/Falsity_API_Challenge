@@ -34,28 +34,102 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createEvidenceController = createEvidenceController;
+exports.listEvidenceController = listEvidenceController;
+exports.getEvidenceController = getEvidenceController;
+exports.updateEvidenceController = updateEvidenceController;
+exports.deleteEvidenceController = deleteEvidenceController;
+const auth_error_1 = require("../../common/errors/auth-error");
 const evidence_schema_1 = require("./evidence.schema");
 const service = __importStar(require("./evidence.service"));
+const verdict_service_1 = require("../verdict/verdict.service");
+function requireAuthenticatedUser(request) {
+    if (request.user === undefined) {
+        throw new auth_error_1.AuthError(401, 'Invalid or expired token');
+    }
+    return request.user;
+}
 /**
  * Create evidence for a claim.
  * POST /api/v1/claims/:id/evidence
  */
 async function createEvidenceController(request, reply) {
+    const { id: claimId } = request.params;
+    const validatedData = evidence_schema_1.createEvidenceSchema.parse(request.body);
+    const currentUser = requireAuthenticatedUser(request);
+    const evidence = await service.addEvidence(claimId, validatedData, currentUser);
+    // Recompute verdict after evidence is added
     try {
-        // Extract claimId from route params
-        const { id: claimId } = request.params;
-        // Validate request body using Zod schema
-        const validatedData = evidence_schema_1.createEvidenceSchema.parse(request.body);
-        // Call service to add evidence
-        const evidence = await service.addEvidence(claimId, validatedData);
-        // Return 201 Created response
-        reply.status(201).send({
-            success: true,
-            data: evidence
-        });
+        await (0, verdict_service_1.recomputeVerdictService)(claimId);
     }
-    catch (error) {
-        // Zod validation errors or service errors will be handled by Fastify error hooks
-        throw error;
+    catch (err) {
+        console.error('Failed to recompute verdict:', err);
     }
+    reply.status(201).send({
+        success: true,
+        data: evidence
+    });
+}
+/**
+ * List evidence for a claim.
+ * GET /api/v1/claims/:id/evidence
+ */
+async function listEvidenceController(request, reply) {
+    const { id: claimId } = request.params;
+    requireAuthenticatedUser(request);
+    const evidence = await service.getEvidenceForClaim(claimId);
+    reply.status(200).send({
+        success: true,
+        data: evidence
+    });
+}
+/**
+ * Get a single evidence record.
+ * GET /api/v1/claims/:id/evidence/:evidenceId
+ */
+async function getEvidenceController(request, reply) {
+    const { evidenceId } = request.params;
+    requireAuthenticatedUser(request);
+    const evidence = await service.getEvidenceById(evidenceId);
+    reply.status(200).send({
+        success: true,
+        data: evidence
+    });
+}
+/**
+ * Update evidence.
+ * PATCH /api/v1/claims/:id/evidence/:evidenceId
+ */
+async function updateEvidenceController(request, reply) {
+    const { id: claimId, evidenceId } = request.params;
+    const validatedData = evidence_schema_1.createEvidenceSchema.partial().parse(request.body);
+    const currentUser = requireAuthenticatedUser(request);
+    const evidence = await service.updateEvidenceService(evidenceId, validatedData, currentUser);
+    // Recompute verdict after evidence is updated
+    try {
+        await (0, verdict_service_1.recomputeVerdictService)(claimId);
+    }
+    catch (err) {
+        console.error('Failed to recompute verdict:', err);
+    }
+    reply.status(200).send({
+        success: true,
+        data: evidence
+    });
+}
+/**
+ * Delete evidence.
+ * DELETE /api/v1/claims/:id/evidence/:evidenceId
+ */
+async function deleteEvidenceController(request, reply) {
+    const { id: claimId, evidenceId } = request.params;
+    const currentUser = requireAuthenticatedUser(request);
+    await service.deleteEvidenceService(evidenceId, currentUser);
+    // Recompute verdict after evidence is deleted
+    try {
+        await (0, verdict_service_1.recomputeVerdictService)(claimId);
+    }
+    catch (err) {
+        console.error('Failed to recompute verdict:', err);
+    }
+    reply.status(204).send();
 }

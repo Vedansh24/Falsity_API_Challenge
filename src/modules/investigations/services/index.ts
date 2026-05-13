@@ -1,0 +1,2 @@
+// Investigations services entrypoint
+export {};

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const claimStatuses = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED'] as const;
+const claimStatuses = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'NEEDS_MORE_EVIDENCE', 'READY_FOR_VERDICT', 'PUBLISHED', 'ARCHIVED', 'RESOLVED', 'REJECTED'] as const;
 
 const claimProperties = {
   id: { type: 'string', format: 'uuid' },
@@ -8,6 +8,13 @@ const claimProperties = {
   statement: { type: 'string' },
   status: { type: 'string', enum: [...claimStatuses] },
   submittedById: { type: 'string', format: 'uuid' },
+  category: { type: 'string' },
+  publicSlug: { type: 'string' },
+  currentAnalystId: { type: 'string', format: 'uuid' },
+  currentReviewerId: { type: 'string', format: 'uuid' },
+  submittedAt: { type: 'string', format: 'date-time' },
+  publishedAt: { type: 'string', format: 'date-time' },
+  archivedAt: { type: 'string', format: 'date-time' },
   createdAt: { type: 'string', format: 'date-time' },
   updatedAt: { type: 'string', format: 'date-time' }
 } as const;

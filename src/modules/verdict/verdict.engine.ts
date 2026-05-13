@@ -47,32 +47,44 @@ export function computeFinalVerdict(input: ScoreInput): VerdictOutput {
 	// Keep decision deterministic when no evidence contributes to either side.
 	if (totalScore === 0) {
 		return {
-			verdict: 'INCONCLUSIVE',
+			verdict: 'UNVERIFIABLE' as any,
+			verdictType: 'UNVERIFIABLE',
 			confidenceScore: 0,
-			finalScore
+			confidenceBand: 'LOW',
+			finalScore,
+			falsityScore: 50
 		};
 	}
 
 	if (finalScore > THRESHOLD) {
 		return {
-			verdict: 'TRUE',
+			verdict: 'TRUE' as any,
+			verdictType: 'TRUE',
 			confidenceScore: supportScore / totalScore,
-			finalScore
+			confidenceBand: 'HIGH',
+			finalScore,
+			falsityScore: 10
 		};
 	}
 
 	if (finalScore < -THRESHOLD) {
 		return {
-			verdict: 'FALSE',
+			verdict: 'FALSE' as any,
+			verdictType: 'FALSE',
 			confidenceScore: supportScore / totalScore,
-			finalScore
+			confidenceBand: 'HIGH',
+			finalScore,
+			falsityScore: 90
 		};
 	}
 
 	return {
-		verdict: 'INCONCLUSIVE',
+		verdict: 'PARTLY_FALSE' as any,
+		verdictType: 'PARTLY_FALSE',
 		confidenceScore: supportScore / totalScore,
-		finalScore
+		confidenceBand: 'MEDIUM',
+		finalScore,
+		falsityScore: 50
 	};
 }
 
@@ -170,25 +182,43 @@ export function computeVerdict(evidences: EvidenceInput[]): ComputeVerdictResult
 	const { supportScore, contradictScore } = computeScores(evidences);
 
 	// STEP 2: Apply decision logic with thresholds
-	const { verdict, confidenceScore, finalScore } = computeFinalVerdict({
+	const verdictOutput = computeFinalVerdict({
 		supportScore,
 		contradictScore
 	});
+	const { verdict, verdictType, confidenceScore, finalScore, falsityScore, confidenceBand } = verdictOutput;
+
+	// Calculate average credibility and contradiction level (simplified for old engine)
+	const averageCredibility = evidences.length > 0 
+		? evidences.reduce((sum, e) => sum + e.credibilityScore, 0) / evidences.length
+		: 0;
+	
+	const totalScore = supportScore + contradictScore;
+	const contradictionLevel = totalScore > 0 
+		? Math.min(supportScore, contradictScore) / Math.max(supportScore, contradictScore || 1)
+		: 0;
 
 	// STEP 3: Generate human-readable reasoning
 	const reasoning = buildReasoning(evidences, {
 		supportScore,
 		contradictScore,
 		finalScore,
-		verdict
+		verdict: verdictType,
+		contradictionLevel,
+		averageCredibility
 	});
 
 	// STEP 4: Return complete, production-ready result
 	return {
-		verdict,
+		verdict: verdictType,
+		verdictType,
 		confidenceScore,
 		supportScore,
 		contradictScore,
-		reasoning
+		contradictionLevel,
+		reasoning,
+		falsityScore,
+		confidenceBand,
+		evidenceCount: evidences.length
 	};
 }

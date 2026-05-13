@@ -4,6 +4,9 @@ exports.registerPlugins = registerPlugins;
 const zod_1 = require("zod");
 const app_error_1 = require("../common/errors/app-error");
 const validation_error_1 = require("../common/errors/validation-error");
+const error_response_1 = require("../common/responses/error-response");
+const api_response_1 = require("../common/responses/api-response");
+const validation_1 = require("../common/utils/validation");
 function getStatusCode(error) {
     if (error instanceof app_error_1.AppError) {
         return error.statusCode;
@@ -38,10 +41,62 @@ function getErrorMessage(error, statusCode) {
     return 'Internal server error';
 }
 function registerPlugins(fastify) {
+    // Standardize successful responses when controllers return raw payloads.
+    fastify.addHook('onSend', async (_request, reply, payload) => {
+        try {
+            // Only wrap successful non-error responses
+            const statusCode = reply.statusCode ?? 200;
+            if (statusCode >= 400)
+                return payload;
+            // If payload is a string, try to parse JSON
+            let parsed = payload;
+            if (typeof payload === 'string') {
+                try {
+                    parsed = JSON.parse(payload);
+                }
+                catch {
+                    // leave as-is (could be HTML or plain text)
+                    return payload;
+                }
+            }
+            // If already standardized, do nothing
+            if (parsed && typeof parsed === 'object' && 'success' in parsed) {
+                return payload;
+            }
+            // Build standardized success envelope
+            const envelope = (0, api_response_1.createApiResponse)(parsed, 'Operation successful', null);
+            return JSON.stringify(envelope);
+        }
+        catch (e) {
+            fastify.log.error(e);
+            return payload;
+        }
+    });
     fastify.setErrorHandler((error, _request, reply) => {
         const statusCode = getStatusCode(error);
-        const message = getErrorMessage(error, statusCode);
+        let message = getErrorMessage(error, statusCode);
+        let code = 'ERROR';
+        let details = [];
+        if (error instanceof app_error_1.AppError) {
+            code = error.code ?? code;
+            details = error.details ? [error.details] : [];
+        }
+        if (error instanceof zod_1.ZodError) {
+            details = (0, validation_1.formatZodErrors)(error);
+            code = 'VALIDATION_ERROR';
+            message = 'Validation failed';
+        }
+        if (typeof error === 'object' && error !== null && 'validation' in error) {
+            // fastify-validator style
+            // Include raw validation if present
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            details = error.validation || [];
+            code = 'VALIDATION_ERROR';
+            message = 'Validation failed';
+        }
         fastify.log.error(error);
-        void reply.status(statusCode).send({ error: message });
+        const payload = (0, error_response_1.createErrorResponse)(message, String(code), Array.isArray(details) ? details : []);
+        void reply.status(statusCode).send(payload);
     });
 }
