@@ -27,8 +27,10 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   const app = Fastify({ logger: createLoggerOptions() });
 
-  // Register Helmet for security headers
-  await app.register(helmet);
+  // Register Helmet for security headers (skip during local development if plugin mismatch occurs)
+  if (process.env.NODE_ENV !== 'development') {
+    await app.register(helmet);
+  }
 
   // CORS origin from env; support comma-separated list
   const rawOrigins = process.env.CORS_ORIGIN || 'http://localhost:5173';
